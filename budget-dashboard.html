@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Family Budget Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{--bg:#0d1117;--sur:#161b22;--sur2:#21262d;--bor:#30363d;--txt:#e6edf3;--txt2:#8b949e;--acc:#4f8ef7;--grn:#3fb950;--red:#f85149;--ylw:#d29922;--pur:#a371f7;--kps:#60a5fa;--sls:#f472b6}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
+a{color:var(--acc)}
+/* SETUP */
+#setup{max-width:640px;margin:40px auto;padding:20px}
+.s-logo{display:flex;align-items:center;gap:12px;margin-bottom:28px}
+.s-logo h1{font-size:24px;font-weight:700}
+.step{background:var(--sur);border:1px solid var(--bor);border-radius:12px;padding:20px;margin-bottom:14px}
+.step-h{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.sn{width:26px;height:26px;border-radius:50%;background:var(--acc);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.step h3{font-size:15px;font-weight:600}
+.step p,.step li{color:var(--txt2);font-size:13px;line-height:1.65}
+.step ol,.step ul{padding-left:18px;margin-top:6px}
+.step li{margin-bottom:4px}
+code{background:var(--sur2);padding:2px 6px;border-radius:4px;font-family:'SF Mono',monospace;font-size:12px;color:#f0883e}
+.ig{margin-top:12px}
+.ig label{display:block;font-size:12px;color:var(--txt2);margin-bottom:5px}
+input[type=text]{width:100%;background:var(--sur2);border:1px solid var(--bor);border-radius:8px;padding:9px 12px;color:var(--txt);font-size:13px;outline:none;transition:border .2s}
+input[type=text]:focus{border-color:var(--acc)}
+.btn-p{width:100%;padding:12px;margin-top:16px;background:var(--acc);color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;transition:opacity .2s}
+.btn-p:hover{opacity:.85}
+.btn-sm{background:transparent;border:1px solid var(--bor);color:var(--txt2);border-radius:8px;padding:7px 14px;font-size:12px;cursor:pointer;font-weight:500;transition:opacity .2s}
+.btn-sm:hover{opacity:.75}
+.note{font-size:12px;color:var(--txt2);margin-top:10px;padding:10px 14px;background:rgba(79,142,247,.08);border-radius:8px;border-left:3px solid var(--acc);line-height:1.6}
+.err{background:rgba(248,81,73,.1);border:1px solid var(--red);border-radius:8px;padding:12px 14px;font-size:13px;color:var(--red);display:none;margin-top:12px}
+/* DASHBOARD */
+#dash{display:none;padding:18px;max-width:1400px;margin:0 auto}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:10px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo h1{font-size:18px;font-weight:700}
+.ftag{font-size:11px;color:var(--txt2);background:var(--sur2);padding:3px 9px;border-radius:12px;margin-top:2px}
+.ctrl{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.seg{display:flex;background:var(--sur);border:1px solid var(--bor);border-radius:9px;overflow:hidden}
+.seg button{background:none;border:none;border-right:1px solid var(--bor);padding:7px 13px;color:var(--txt2);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s}
+.seg button:last-child{border-right:none}
+.seg button.on{background:var(--acc);color:#fff}
+select{background:var(--sur);border:1px solid var(--bor);border-radius:9px;padding:7px 10px;color:var(--txt);font-size:12px;outline:none}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+.card{background:var(--sur);border:1px solid var(--bor);border-radius:14px;padding:16px}
+.clbl{font-size:11px;color:var(--txt2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.cval{font-size:24px;font-weight:700;line-height:1}
+.cval.g{color:var(--grn)}.cval.r{color:var(--red)}.cval.y{color:var(--ylw)}.cval.k{color:var(--kps)}.cval.s{color:var(--sls)}
+.csub{font-size:11px;color:var(--txt2);margin-top:5px}
+.g2{display:grid;grid-template-columns:300px 1fr;gap:12px;margin-bottom:12px}
+.g2b{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+@media(max-width:820px){.g2,.g2b{grid-template-columns:1fr}}
+.box{background:var(--sur);border:1px solid var(--bor);border-radius:14px;padding:18px}
+.bxh{font-size:11px;color:var(--txt2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px}
+.cr{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.cn{width:120px;font-size:12px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bt{flex:1;height:5px;background:var(--sur2);border-radius:3px;overflow:hidden}
+.bf{height:100%;border-radius:3px;transition:width .4s}
+.ca{width:72px;text-align:right;font-size:12px;color:var(--txt2)}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;color:var(--txt2);text-transform:uppercase;padding:6px 10px;border-bottom:1px solid var(--bor);text-align:left;white-space:nowrap}
+td{padding:8px 10px;font-size:12px;border-bottom:1px solid rgba(48,54,61,.5)}
+tr:last-child td{border-bottom:none}
+.bdg{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600}
+.bg{background:rgba(63,185,80,.12);color:var(--grn)}
+.br{background:rgba(248,81,73,.12);color:var(--red)}
+.by{background:rgba(210,153,34,.12);color:var(--ylw)}
+.ld{display:flex;align-items:center;justify-content:center;height:180px;color:var(--txt2);font-size:13px}
+.sp{width:18px;height:18px;border:2px solid var(--bor);border-top-color:var(--acc);border-radius:50%;animation:sp .7s linear infinite;margin-right:8px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.av{width:30px;height:30px;border-radius:50%;background:var(--pur);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.ur{display:flex;align-items:center;gap:8px}
+.empty{text-align:center;padding:20px;color:var(--txt2);font-size:13px}
+</style>
+</head>
+<body>
+
+<!-- ═══ SETUP ═══ -->
+<div id="setup">
+  <div class="s-logo">
+    <span style="font-size:30px">🏦</span>
+    <div>
+      <h1>Family Budget Dashboard</h1>
+      <p style="color:var(--txt2);font-size:13px;margin-top:3px">Read-only insights from your OneDrive Excel budget</p>
+    </div>
+  </div>
+
+  <div id="s-err" class="err"></div>
+
+  <div class="step">
+    <div class="step-h"><div class="sn">1</div><h3>Register a free Azure app — one-time, ~10 min</h3></div>
+    <ol>
+      <li>Go to <a href="https://portal.azure.com" target="_blank">portal.azure.com</a> and sign in with your Microsoft account</li>
+      <li>Search <strong>App registrations</strong> → click <strong>New registration</strong></li>
+      <li>Name it "Budget Dashboard" · Supported account types: <em>Personal Microsoft accounts only</em></li>
+      <li>Redirect URI → Select <strong>Single-page application (SPA)</strong> → paste this URL:<br>
+          <code id="ruri" style="display:block;margin-top:6px;word-break:break-all"></code></li>
+      <li>Click <strong>Register</strong></li>
+      <li>Go to <strong>API permissions</strong> → Add a permission → Microsoft Graph → Delegated → add <code>Files.Read</code> and <code>User.Read</code></li>
+      <li>Copy the <strong>Application (client) ID</strong> shown on the Overview page</li>
+    </ol>
+    <div class="note">Once hosted on GitHub Pages or Netlify, update the Redirect URI in Azure to your hosted URL — then both you and your wife can access it from any device.</div>
+  </div>
+
+  <div class="step">
+    <div class="step-h"><div class="sn">2</div><h3>Enter your details below</h3></div>
+    <div class="ig">
+      <label>Azure Application (Client) ID</label>
+      <input type="text" id="cfg-id" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+    </div>
+    <div class="ig">
+      <label>OneDrive file path (relative to your OneDrive root folder)</label>
+      <input type="text" id="cfg-fp" placeholder="e.g.  Documents/Family Budget 2026.xlsx">
+    </div>
+    <button class="btn-p" onclick="goLogin()">Sign in with Microsoft →</button>
+    <div class="note">🔒 This dashboard is <strong>read-only</strong>. It never writes to or modifies your Excel file — it only reads your existing data to display insights.</div>
+  </div>
+</div>
+
+<!-- ═══ DASHBOARD ═══ -->
+<div id="dash">
+  <header>
+    <div class="logo">
+      <span style="font-size:22px">🏦</span>
+      <div>
+        <h1>Family Budget Dashboard</h1>
+        <div class="ftag" id="ftag">—</div>
+      </div>
+    </div>
+    <div class="ctrl">
+      <!-- Period toggle -->
+      <div class="seg" id="pseg">
+        <button class="on" onclick="setPer('year',this)">Year</button>
+        <button onclick="setPer('quarter',this)">Quarter</button>
+        <button onclick="setPer('month',this)">Month</button>
+      </div>
+      <select id="yrs" onchange="render()"></select>
+      <select id="qs" style="display:none" onchange="render()">
+        <option value="1">Q1 — Jan–Mar</option>
+        <option value="2">Q2 — Apr–Jun</option>
+        <option value="3">Q3 — Jul–Sep</option>
+        <option value="4">Q4 — Oct–Dec</option>
+      </select>
+      <select id="mos" style="display:none" onchange="render()"></select>
+      <!-- Person toggle -->
+      <div class="seg" id="xseg">
+        <button class="on" onclick="setPrs('all',this)">All</button>
+        <button onclick="setPrs('KPS',this)" style="color:var(--kps)">KPS</button>
+        <button onclick="setPrs('SLS',this)" style="color:var(--sls)">SLS</button>
+      </div>
+      <button class="btn-sm" onclick="loadData()">↻ Refresh</button>
+      <div class="ur">
+        <div class="av" id="uav">?</div>
+        <span id="unm" style="font-size:12px;color:var(--txt2)"></span>
+        <button class="btn-sm" onclick="doLogout()">Sign out</button>
+      </div>
+    </div>
+  </header>
+
+  <div id="derr" class="err" style="margin-bottom:12px"></div>
+  <div id="dld" class="ld"><div class="sp"></div>Connecting to OneDrive…</div>
+
+  <div id="main" style="display:none">
+    <!-- Summary cards -->
+    <div class="cards">
+      <div class="card"><div class="clbl">Total Income</div><div class="cval g" id="ci">—</div><div class="csub" id="ci-s"></div></div>
+      <div class="card"><div class="clbl">Total Expenses</div><div class="cval r" id="ce">—</div><div class="csub" id="ce-s"></div></div>
+      <div class="card"><div class="clbl">Total Bills</div><div class="cval y" id="cb">—</div><div class="csub" id="cb-s"></div></div>
+      <div class="card"><div class="clbl">Net Savings</div><div class="cval" id="cnet">—</div><div class="csub" id="cnet-s"></div></div>
+      <div class="card"><div class="clbl">KPS Spending</div><div class="cval k" id="ck">—</div><div class="csub" id="ck-s"></div></div>
+      <div class="card"><div class="clbl">SLS Spending</div><div class="cval s" id="cs">—</div><div class="csub" id="cs-s"></div></div>
+    </div>
+
+    <!-- Charts row -->
+    <div class="g2">
+      <div class="box"><div class="bxh">Spending by Category</div><canvas id="donut" style="max-height:220px"></canvas></div>
+      <div class="box"><div class="bxh">Monthly Income vs Spending</div><canvas id="trend" style="max-height:220px"></canvas></div>
+    </div>
+
+    <!-- Category bars + Bills table -->
+    <div class="g2b">
+      <div class="box">
+        <div class="bxh">Top Expense Categories</div>
+        <div id="catbars"></div>
+      </div>
+      <div class="box">
+        <div class="bxh">Bills Status</div>
+        <div class="tw">
+          <table>
+            <thead><tr><th>Description</th><th>Category</th><th>Person</th><th>Amount</th><th>Status</th></tr></thead>
+            <tbody id="btbl"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transactions table -->
+    <div class="box" style="margin-bottom:14px">
+      <div class="bxh">Recent Transactions</div>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Month</th><th>Half</th><th>Description</th><th>Category</th><th>Type</th><th>Person</th><th>Amount</th></tr></thead>
+          <tbody id="txtbl"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CONSTANTS ─────────────────────────────────────────────────
+const MNS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MKEYS={JAN:0,FEB:1,MAR:2,APR:3,MAY:4,JUN:5,JUL:6,AUG:7,SEP:8,OCT:9,NOV:10,DEC:11};
+// Known section header keywords and the type they map to
+const SEC_MAP={'bill list':'bill','expenses':'expense','adjustment':'expense','home':'expense','groceries':'expense','auto':'expense','travel':'expense'};
+// Category color map (matches your actual categories)
+const CCLR={Groceries:'#3fb950',Shopping:'#4f8ef7',Travel:'#a371f7','Home Supplies':'#f0883e','Home Improvement':'#d29922','Personal Care':'#22d3ee',Gifts:'#fb7185',Holiday:'#fde68a',Subscriptions:'#818cf8','Gas & Fuel':'#f0883e','Car Payment':'#475569','Grandkids':'#f472b6','Auto Savings':'#34d399','Smart Home':'#67e8f9','Car Insurance':'#94a3b8'};
+const COLS=['#4f8ef7','#3fb950','#f85149','#d29922','#a371f7','#f0883e','#22d3ee','#fb7185','#86efac','#fde68a','#818cf8','#34d399'];
+
+// ── STATE ─────────────────────────────────────────────────────
+let cfg={}, tok=null, allTx=[], CH={};
+let st={per:'year',yr:2026,q:Math.ceil((new Date().getMonth()+1)/3),mo:new Date().getMonth()+1,prs:'all'};
+
+// ── INIT ──────────────────────────────────────────────────────
+(async()=>{
+  const ru=document.getElementById('ruri');
+  if(ru) ru.textContent=window.location.origin+window.location.pathname;
+  MNS.forEach((m,i)=>{
+    const o=document.createElement('option');
+    o.value=i+1; o.textContent=m;
+    if(i+1===st.mo) o.selected=true;
+    document.getElementById('mos').appendChild(o);
+  });
+  const sc=sessionStorage.getItem('bcfg');
+  if(sc){cfg=JSON.parse(sc);document.getElementById('cfg-id').value=cfg.cid||'';document.getElementById('cfg-fp').value=cfg.fp||'';}
+  const p=new URLSearchParams(window.location.search);
+  if(p.get('code')) await doAuth(p.get('code'));
+  else if(sessionStorage.getItem('btok')){tok=sessionStorage.getItem('btok');showDash();await loadData();}
+})();
+
+// ── PKCE OAUTH ────────────────────────────────────────────────
+const b64u=a=>btoa(String.fromCharCode(...a)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+async function gv(){const a=new Uint8Array(32);crypto.getRandomValues(a);return b64u(a);}
+async function gc(v){const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(v));return b64u(new Uint8Array(d));}
+
+function goLogin(){
+  cfg={cid:document.getElementById('cfg-id').value.trim(),fp:document.getElementById('cfg-fp').value.trim(),ru:window.location.origin+window.location.pathname};
+  if(!cfg.cid||!cfg.fp){serr('Please fill in both fields.');return;}
+  sessionStorage.setItem('bcfg',JSON.stringify(cfg));
+  (async()=>{const v=await gv(),c=await gc(v);sessionStorage.setItem('bpk',v);
+  const p=new URLSearchParams({client_id:cfg.cid,response_type:'code',redirect_uri:cfg.ru,scope:'Files.Read User.Read offline_access',code_challenge:c,code_challenge_method:'S256',response_mode:'query'});
+  window.location.href=`https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?${p}`;})();
+}
+
+async function doAuth(code){
+  const sc=sessionStorage.getItem('bcfg');
+  if(!sc){serr('Session lost — please try again.');return;}
+  cfg=JSON.parse(sc);
+  try{
+    const r=await fetch('https://login.microsoftonline.com/consumers/oauth2/v2.0/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({client_id:cfg.cid,grant_type:'authorization_code',code,redirect_uri:cfg.ru,code_verifier:sessionStorage.getItem('bpk')})});
+    const d=await r.json();
+    if(!d.access_token) throw new Error(d.error_description||'Authentication failed');
+    tok=d.access_token; sessionStorage.setItem('btok',tok);
+    window.history.replaceState({},'',window.location.pathname);
+    showDash(); await loadData();
+  }catch(e){serr('Sign-in failed: '+e.message);}
+}
+
+function doLogout(){sessionStorage.removeItem('btok');tok=null;document.getElementById('dash').style.display='none';document.getElementById('setup').style.display='block';}
+
+// ── GRAPH API ─────────────────────────────────────────────────
+async function gapi(ep){
+  const r=await fetch('https://graph.microsoft.com/v1.0'+ep,{headers:{Authorization:'Bearer '+tok}});
+  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error?.message||'HTTP '+r.status);}
+  return r.json();
+}
+
+// ── LOAD ──────────────────────────────────────────────────────
+async function loadData(){
+  setLd(true);
+  document.getElementById('derr').style.display='none';
+  try{
+    // User info
+    const u=await gapi('/me');
+    document.getElementById('unm').textContent=u.displayName||u.mail||'';
+    document.getElementById('uav').textContent=(u.displayName||'?').charAt(0).toUpperCase();
+    document.getElementById('ftag').textContent=cfg.fp.split('/').pop();
+
+    // Encode file path
+    const enc=cfg.fp.split('/').map(encodeURIComponent).join('/');
+
+    // Get all worksheets and filter for monthly tabs (e.g. JAN26)
+    const ws=await gapi(`/me/drive/root:/${enc}:/workbook/worksheets`);
+    const sheets=ws.value.filter(s=>/^[A-Z]{3}\d{2}$/.test(s.name));
+    if(!sheets.length) throw new Error('No monthly sheet tabs found. Expected tabs named like JAN26, FEB26, etc.');
+
+    // Read all sheets in parallel
+    allTx=[];
+    const results=await Promise.all(sheets.map(s=>readSheet(s.name,enc)));
+    results.forEach(r=>allTx.push(...r));
+    if(!allTx.length) throw new Error('No transaction data found across monthly sheets. Check that your sheets have data.');
+
+    // Populate year selector
+    const yrs=[...new Set(allTx.map(t=>t.yr))].sort();
+    const ysel=document.getElementById('yrs'); ysel.innerHTML='';
+    yrs.forEach(y=>{const o=document.createElement('option');o.value=y;o.textContent=y;if(y===st.yr)o.selected=true;ysel.appendChild(o);});
+    if(!yrs.includes(st.yr)) st.yr=yrs[yrs.length-1];
+
+    document.getElementById('main').style.display='block';
+    render();
+  }catch(e){
+    const el=document.getElementById('derr'); el.textContent='⚠️ '+e.message; el.style.display='block';
+  }finally{setLd(false);}
+}
+
+// ── SHEET PARSER ──────────────────────────────────────────────
+async function readSheet(name, enc){
+  try{
+    const data=await gapi(`/me/drive/root:/${enc}:/workbook/worksheets/${encodeURIComponent(name)}/usedRange`);
+    const m=name.match(/^([A-Z]{3})(\d{2})$/);
+    if(!m||MKEYS[m[1]]===undefined) return [];
+    const mo=MKEYS[m[1]], yr=2000+parseInt(m[2]);
+    return parsePanels(data.values||[], mo, yr);
+  }catch(e){
+    console.warn('Skipping sheet '+name+':',e.message);
+    return [];
+  }
+}
+
+function parsePanels(rows, mo, yr){
+  const tx=[];
+  let sec='bill'; // current section: bill | expense
+  let incDone=false; // only extract income once (left panel Bill List row)
+
+  for(let ri=0;ri<rows.length;ri++){
+    const r=rows[ri];
+    if(!r||!r.length) continue;
+
+    // ── Detect section from left panel col A (index 0) ──
+    const la=sv(r[0]);
+    const lsec=getSec(la);
+    if(lsec!==null){
+      if(lsec==='bill'&&!incDone){
+        // Income lives in the Bill List header row: KPS=col1(B), SLS=col4(E)
+        const ki=nv(r[1]), si=nv(r[4]);
+        if(ki>0) tx.push(mkTx(yr,mo,7,'KPS Income','Income',ki,'Income','KPS',true));
+        if(si>0) tx.push(mkTx(yr,mo,7,'SLS Income','Income',si,'Income','SLS',true));
+        incDone=true;
+      }
+      sec=lsec;
+    }
+
+    // ── Left panel transaction: col I (index 8) ──
+    if(lsec===null){
+      const amt=nv(r[8]);
+      if(amt!==0&&la){
+        const cat=getCat(r,4,la); // col E = category
+        const prs=getP(r,[1,2,3],[5,6]); // KPS: B,C,D  SLS: F,G
+        tx.push(mkTx(yr,mo,7,la,cat,amt,sec==='bill'?'Bill':'Expense',prs,ix(r[7])));
+      }
+    }
+
+    // ── Right panel — detect section from col K (index 10) ──
+    const ra=sv(r[10]);
+    const rsec=getSec(ra);
+    // Note: right panel section headers don't re-extract income (already done from left)
+    if(rsec!==null) sec=rsec;
+
+    // ── Right panel transaction: col S (index 18) ──
+    if(rsec===null){
+      const amt=nv(r[18]);
+      if(amt!==0&&ra){
+        const cat=getCat(r,14,ra); // col O = category
+        const prs=getP(r,[11,12,13],[15,16]); // KPS: L,M,N  SLS: P,Q
+        tx.push(mkTx(yr,mo,22,ra,cat,amt,sec==='bill'?'Bill':'Expense',prs,ix(r[17])));
+      }
+    }
+  }
+  return tx;
+}
+
+function mkTx(yr,mo,day,desc,cat,amt,type,person,paid){
+  return{yr,mo,day,desc,cat,amt:Math.abs(amt),type,person,paid};
+}
+
+// Section detection: returns 'bill' | 'expense' | null
+function getSec(desc){
+  const d=desc.toLowerCase().trim();
+  if(d==='bill list') return 'bill';
+  if(['expenses','adjustment','home','groceries','auto','travel','savings'].includes(d)) return 'expense';
+  return null;
+}
+
+// Get category: use col value if it's text (not a number), else fall back to desc or 'Other'
+function getCat(r,ci,desc){
+  const v=sv(r[ci]);
+  if(v&&isNaN(parseFloat(v))&&v.toUpperCase()!=='X') return v;
+  return desc||'Other';
+}
+
+// Determine who paid: check for 'X' in KPS cols vs SLS cols
+function getP(r,kIdx,sIdx){
+  const k=kIdx.some(i=>ix(r[i]));
+  const s=sIdx.some(i=>ix(r[i]));
+  if(k&&s) return 'Joint';
+  if(k) return 'KPS';
+  if(s) return 'SLS';
+  return 'Joint';
+}
+
+const sv=v=>v==null?'':String(v).trim();
+const nv=v=>{const n=parseFloat(v);return isNaN(n)?0:n;};
+const ix=v=>sv(v).toUpperCase()==='X';
+
+// ── FILTER ────────────────────────────────────────────────────
+function filt(){
+  st.yr=parseInt(document.getElementById('yrs').value||st.yr);
+  st.q=parseInt(document.getElementById('qs').value||st.q);
+  st.mo=parseInt(document.getElementById('mos').value||st.mo);
+  return allTx.filter(t=>{
+    if(t.yr!==st.yr) return false;
+    if(st.per==='quarter'&&Math.ceil((t.mo+1)/3)!==st.q) return false;
+    if(st.per==='month'&&t.mo!==st.mo-1) return false;
+    if(st.prs!=='all'&&t.person!==st.prs&&t.person!=='Joint') return false;
+    return true;
+  });
+}
+
+// ── RENDER ────────────────────────────────────────────────────
+function render(){
+  const tx=filt();
+  const exp=tx.filter(t=>t.type==='Expense');
+  const inc=tx.filter(t=>t.type==='Income');
+  const bil=tx.filter(t=>t.type==='Bill');
+  const kps=tx.filter(t=>t.type!=='Income'&&t.person==='KPS');
+  const sls=tx.filter(t=>t.type!=='Income'&&t.person==='SLS');
+  const sum=a=>a.reduce((s,t)=>s+t.amt,0);
+  const tI=sum(inc),tE=sum(exp),tB=sum(bil),tN=tI-tE-tB;
+
+  set('ci',fmt(tI)); set('ci-s',inc.length+' entries');
+  set('ce',fmt(tE)); set('ce-s',exp.length+' transactions');
+  set('cb',fmt(tB)); set('cb-s',bil.filter(b=>!b.paid).length+' unpaid');
+  const ne=document.getElementById('cnet');
+  ne.textContent=fmt(Math.abs(tN)); ne.className='cval '+(tN>=0?'g':'r');
+  set('cnet-s',tN>=0?'surplus ✓':'deficit ⚠');
+  set('ck',fmt(sum(kps))); set('ck-s',kps.length+' items');
+  set('cs',fmt(sum(sls))); set('cs-s',sls.length+' items');
+
+  const byCat=grp([...exp,...bil],'cat');
+  const catE=Object.entries(byCat).map(([k,v])=>[k,sum(v)]).sort((a,b)=>b[1]-a[1]);
+
+  doDonut(catE.slice(0,10));
+  doTrend();
+  doBars(catE.slice(0,8));
+  doBills(bil);
+  doTxTbl(tx.filter(t=>t.type!=='Income').sort((a,b)=>b.mo-a.mo||b.day-a.day).slice(0,30));
+}
+
+function doDonut(ents){
+  const ctx=document.getElementById('donut').getContext('2d');
+  if(CH.d) CH.d.destroy();
+  if(!ents.length) return;
+  CH.d=new Chart(ctx,{type:'doughnut',data:{labels:ents.map(e=>e[0]),datasets:[{data:ents.map(e=>e[1]),backgroundColor:ents.map((e,i)=>CCLR[e[0]]||COLS[i%COLS.length]),borderWidth:2,borderColor:'#161b22'}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:'#8b949e',font:{size:10},padding:8,boxWidth:10}},tooltip:{callbacks:{label:c=>` ${c.label}: ${fmt(c.raw)}`}}}}});
+}
+
+function doTrend(){
+  const ctx=document.getElementById('trend').getContext('2d');
+  if(CH.t) CH.t.destroy();
+  let labels,eD,iD,bD;
+  if(st.per==='year'){
+    labels=MNS;
+    const byMo=(type)=>MNS.map((_,i)=>allTx.filter(t=>t.yr===st.yr&&t.mo===i&&t.type===type).reduce((s,t)=>s+t.amt,0));
+    eD=byMo('Expense'); iD=byMo('Income'); bD=byMo('Bill');
+  }else if(st.per==='quarter'){
+    const sm=(st.q-1)*3; labels=MNS.slice(sm,sm+3);
+    const byMo=(type)=>[0,1,2].map(i=>allTx.filter(t=>t.yr===st.yr&&t.mo===sm+i&&t.type===type).reduce((s,t)=>s+t.amt,0));
+    eD=byMo('Expense'); iD=byMo('Income'); bD=byMo('Bill');
+  }else{
+    labels=['1st–14th','15th–End'];
+    const half=(type,d)=>allTx.filter(t=>t.yr===st.yr&&t.mo===st.mo-1&&t.day===d&&t.type===type).reduce((s,t)=>s+t.amt,0);
+    eD=[half('Expense',7),half('Expense',22)];
+    iD=[half('Income',7),half('Income',22)];
+    bD=[half('Bill',7),half('Bill',22)];
+  }
+  CH.t=new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Income',data:iD,backgroundColor:'rgba(63,185,80,.65)',borderRadius:4},{label:'Expenses',data:eD,backgroundColor:'rgba(248,81,73,.65)',borderRadius:4},{label:'Bills',data:bD,backgroundColor:'rgba(210,153,34,.65)',borderRadius:4}]},options:{responsive:true,plugins:{legend:{labels:{color:'#8b949e',font:{size:11},boxWidth:12}}},scales:{x:{ticks:{color:'#8b949e'},grid:{color:'rgba(255,255,255,.04)'}},y:{ticks:{color:'#8b949e',callback:v=>'$'+Math.round(v/1000)+'k'},grid:{color:'rgba(255,255,255,.04)'}}}}});
+}
+
+function doBars(ents){
+  const el=document.getElementById('catbars');
+  if(!ents.length){el.innerHTML='<div class="empty">No data for this period</div>';return;}
+  const mx=ents[0][1];
+  el.innerHTML=ents.map(([cat,amt])=>`<div class="cr"><div class="cn" title="${cat}">${cat}</div><div class="bt"><div class="bf" style="width:${(amt/mx*100).toFixed(0)}%;background:${CCLR[cat]||'var(--acc)'}"></div></div><div class="ca">${fmt(amt)}</div></div>`).join('');
+}
+
+function doBills(bil){
+  const tb=document.getElementById('btbl');
+  if(!bil.length){tb.innerHTML='<tr><td colspan="5" class="empty">No bills for this period</td></tr>';return;}
+  tb.innerHTML=bil.map(b=>`<tr><td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${b.desc}">${b.desc}</td><td>${b.cat}</td><td style="color:${b.person==='KPS'?'var(--kps)':b.person==='SLS'?'var(--sls)':'var(--txt2)'}">${b.person}</td><td>${fmt(b.amt)}</td><td><span class="bdg ${b.paid?'bg':'br'}">${b.paid?'Paid':'Unpaid'}</span></td></tr>`).join('');
+}
+
+function doTxTbl(txs){
+  const tb=document.getElementById('txtbl');
+  if(!txs.length){tb.innerHTML='<tr><td colspan="7" class="empty">No transactions for this period</td></tr>';return;}
+  tb.innerHTML=txs.map(t=>`<tr><td>${MNS[t.mo]}</td><td style="white-space:nowrap">${t.day<=14?'1st–14th':'15th–End'}</td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.desc}">${t.desc}</td><td>${t.cat}</td><td><span class="bdg ${t.type==='Bill'?'by':'br'}">${t.type}</span></td><td style="color:${t.person==='KPS'?'var(--kps)':t.person==='SLS'?'var(--sls)':'var(--txt2)'}">${t.person}</td><td>${fmt(t.amt)}</td></tr>`).join('');
+}
+
+// ── UTILITIES ─────────────────────────────────────────────────
+const fmt=n=>'$'+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+const grp=(arr,k)=>arr.reduce((a,t)=>{const v=t[k]||'Other';(a[v]=a[v]||[]).push(t);return a;},{});
+
+function setLd(v){document.getElementById('dld').style.display=v?'flex':'none';}
+function showDash(){document.getElementById('setup').style.display='none';document.getElementById('dash').style.display='block';}
+function serr(m){const e=document.getElementById('s-err');e.textContent=m;e.style.display='block';}
+
+function setPer(p,btn){
+  st.per=p;
+  document.querySelectorAll('#pseg button').forEach(b=>b.classList.remove('on')); btn.classList.add('on');
+  document.getElementById('qs').style.display=p==='quarter'?'inline-block':'none';
+  document.getElementById('mos').style.display=p==='month'?'inline-block':'none';
+  render();
+}
+function setPrs(p,btn){
+  st.prs=p;
+  document.querySelectorAll('#xseg button').forEach(b=>b.classList.remove('on')); btn.classList.add('on');
+  render();
+}
+</script>
+</body>
+</html>
